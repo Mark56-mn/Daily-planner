@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Plus, CalendarDays, Moon, Sun, GripVertical } from 'lucide-react';
+import { Plus, CalendarDays, Moon, Sun, GripVertical, BellRing, X } from 'lucide-react';
 import { useTasks } from '@/lib/store';
-import { DayOfWeek } from '@/lib/types';
+import { DayOfWeek, Task } from '@/lib/types';
 import TaskCard from './task-card';
 import AddTaskSheet from './add-task-sheet';
 import WeeklyProgress from './weekly-progress';
 import { requestNotificationPermission, sendLocalNotification } from '@/lib/notifications';
-import { motion } from 'motion/react';
+import { stopAlarmSound } from '@/lib/audio';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -47,6 +48,7 @@ export default function Planner() {
   const [now, setNow] = useState(new Date());
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [ringingTask, setRingingTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -64,6 +66,11 @@ export default function Planner() {
     if (over && active.id !== over.id) {
       reorderTasks(active.id as string, over.id as string);
     }
+  };
+
+  const dismissAlarm = () => {
+    stopAlarmSound();
+    setRingingTask(null);
   };
 
   // Update current time every 10 seconds for notifications and dates
@@ -99,8 +106,9 @@ export default function Planner() {
         
         if (task.time === currentFormattedTime) {
           if (!sessionStorage.getItem(notifyKey + 'now')) {
-            sendLocalNotification(`Task due: ${task.title}`, { body: "It's time!" });
+            sendLocalNotification(`Alarm: ${task.title}`, { body: "It's time!" });
             sessionStorage.setItem(notifyKey + 'now', 'true');
+            setRingingTask(task);
           }
         } else if (task.hasReminder && task.time === time5MinFromNow) {
           if (!sessionStorage.getItem(notifyKey + '5m')) {
@@ -224,6 +232,57 @@ export default function Planner() {
         onClose={() => setIsSheetOpen(false)}
         onSave={(task) => addTask(task)}
       />
+
+      {/* Full Screen Alarm Ringing Overlay */}
+      <AnimatePresence>
+        {ringingTask && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white dark:bg-[#1A1A1A] w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col items-center relative overflow-hidden"
+            >
+              {/* Pulsing ring background */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <motion.div 
+                  animate={{ scale: [1, 1.5, 2], opacity: [0.5, 0, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                  className="w-32 h-32 rounded-full bg-blue-500/20"
+                />
+              </div>
+
+              <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-6 relative z-10">
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, -10, 10, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+                >
+                  <BellRing size={40} className="stroke-[1.5]" />
+                </motion.div>
+              </div>
+              
+              <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-2 relative z-10">
+                {ringingTask.time}
+              </h2>
+              <p className="text-lg text-neutral-600 dark:text-neutral-400 font-medium mb-8 relative z-10">
+                {ringingTask.title}
+              </p>
+
+              <button
+                onClick={dismissAlarm}
+                className="w-full bg-neutral-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold text-lg active:scale-95 transition-transform flex items-center justify-center gap-2 relative z-10"
+              >
+                <X size={24} />
+                Dismiss
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

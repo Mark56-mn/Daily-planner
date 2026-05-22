@@ -42,8 +42,6 @@ self.addEventListener('fetch', event => {
 
             caches.open(CACHE_NAME)
               .then(function(cache) {
-                // Avoid caching API routes or next internal non-static data if needed
-                // But for basic offline, caching most files is fine
                 cache.put(event.request, responseToCache);
               });
 
@@ -51,8 +49,27 @@ self.addEventListener('fetch', event => {
           }
         ).catch(() => {
           // Fallback if both cache and network fail (offline and not cached)
-          // You could return a custom offline page here.
         });
       })
+  );
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  
+  // This looks to see if the current is already open and
+  // focuses if it is
+  event.waitUntil(
+    clients.matchAll({
+      type: "window"
+    }).then(function(clientList) {
+      for (var i = 0; i < clientList.length; i++) {
+        var client = clientList[i];
+        if (client.url == '/' && 'focus' in client)
+          return client.focus();
+      }
+      if (clients.openWindow)
+        return clients.openWindow('/');
+    })
   );
 });
