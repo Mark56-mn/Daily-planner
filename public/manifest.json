@@ -1,0 +1,17 @@
+{
+  "name": "Daily Planner",
+  "short_name": "Planner",
+  "description": "Minimal local daily planner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
