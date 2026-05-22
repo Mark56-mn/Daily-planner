@@ -18,16 +18,27 @@ export async function requestNotificationPermission() {
   return false;
 }
 
-export function sendLocalNotification(title: string, options?: NotificationOptions) {
+export async function sendLocalNotification(title: string, options?: NotificationOptions) {
   if (!('Notification' in window)) return;
   
   if (Notification.permission === 'granted') {
-    new Notification(title, {
-      icon: '/icon.png', // Assuming we have or will have a default icon
+    const notificationOptions = {
+      icon: '/icon.png', 
       badge: '/icon.png',
       requireInteraction: true,
       ...options
-    });
+    };
+
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, notificationOptions);
+      } catch (error) {
+        new Notification(title, notificationOptions);
+      }
+    } else {
+      new Notification(title, notificationOptions);
+    }
     
     // Play synthetic alarm sound
     playAlarmSound();

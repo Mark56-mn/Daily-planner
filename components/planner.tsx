@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Plus, CalendarDays, Moon, Sun } from 'lucide-react';
+import { Plus, CalendarDays } from 'lucide-react';
 import { useTasks } from '@/lib/store';
 import { DayOfWeek } from '@/lib/types';
 import TaskCard from './task-card';
@@ -10,18 +10,14 @@ import AddTaskSheet from './add-task-sheet';
 import WeeklyProgress from './weekly-progress';
 import { requestNotificationPermission, sendLocalNotification } from '@/lib/notifications';
 import { motion } from 'motion/react';
-import { useTheme } from 'next-themes';
 
 export default function Planner() {
   const { tasks, addTask, toggleTaskCompletion, deleteTask, isLoaded } = useTasks();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [now, setNow] = useState(new Date());
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
 
   // Update current time every 10 seconds for notifications and dates
   useEffect(() => {
-    setMounted(true);
     const interval = setInterval(() => {
       setNow(new Date());
     }, 10000); // 10s check
@@ -88,35 +84,38 @@ export default function Planner() {
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [tasks, currentDayOfWeek, todayStr]);
 
+  const completedCount = todaysTasks.filter(t => t.completedDates.includes(todayStr)).length;
+  const progressPercent = todaysTasks.length > 0 ? (completedCount / todaysTasks.length) * 100 : 0;
+  const uncompletedCount = todaysTasks.length - completedCount;
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'setAppBadge' in navigator) {
+      if (uncompletedCount > 0) {
+        (navigator as any).setAppBadge(uncompletedCount).catch(console.error);
+      } else {
+        (navigator as any).clearAppBadge().catch(console.error);
+      }
+    }
+  }, [uncompletedCount]);
+
   if (!isLoaded) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F8F9FA] dark:bg-black">
-        <div className="w-8 h-8 border-4 border-neutral-200 dark:border-neutral-800 border-t-neutral-900 dark:border-t-neutral-100 rounded-full animate-spin" />
+      <div className="flex h-screen items-center justify-center bg-[#F8F9FA]">
+        <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin" />
       </div>
     );
   }
 
-  const completedCount = todaysTasks.filter(t => t.completedDates.includes(todayStr)).length;
-  const progressPercent = todaysTasks.length > 0 ? (completedCount / todaysTasks.length) * 100 : 0;
-
   return (
-    <div className="min-h-screen pb-28 md:pb-6 md:pt-6 max-w-[400px] mx-auto relative bg-[#F8F9FA] dark:bg-black md:bg-white dark:md:bg-[#0A0A0A] md:shadow-2xl md:border-[8px] md:border-neutral-900 dark:md:border-neutral-800 md:rounded-[48px] overflow-hidden md:h-[800px] md:min-h-0 md:my-auto flex flex-col transition-colors duration-300">
+    <div className="min-h-screen pb-28 md:pb-6 md:pt-6 max-w-[400px] mx-auto relative bg-[#F8F9FA] md:bg-white md:shadow-2xl md:border-[8px] md:border-neutral-900 md:rounded-[48px] overflow-hidden md:h-[800px] md:min-h-0 md:my-auto flex flex-col">
       <header className="px-6 pt-12 pb-6 bg-transparent shrink-0">
         <div className="flex items-end justify-between mb-2">
           <div>
-            <p className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">
               {format(now, 'EEEE, MMM d')}
             </p>
-            <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mt-1">Today</h1>
+            <h1 className="text-3xl font-bold text-neutral-900 mt-1">Today</h1>
           </div>
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-          )}
         </div>
         
         <WeeklyProgress tasks={tasks} today={now} />
@@ -125,8 +124,8 @@ export default function Planner() {
       <main className="flex-1 px-6 space-y-5 overflow-y-auto no-scrollbar pb-24 md:pb-32">
         {todaysTasks.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center justify-center opacity-50">
-            <CalendarDays size={48} className="mb-4 text-neutral-400 dark:text-neutral-600 stroke-[1.5]" />
-            <p className="text-neutral-500 dark:text-neutral-400 font-medium text-lg">No tasks for today</p>
+            <CalendarDays size={48} className="mb-4 text-neutral-400 stroke-[1.5]" />
+            <p className="text-neutral-500 font-medium text-lg">No tasks for today</p>
             <p className="text-sm mt-1">Tap the button below to schedule</p>
           </div>
         ) : (
@@ -143,10 +142,10 @@ export default function Planner() {
       </main>
 
       {/* FAB */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 md:absolute md:bottom-0 z-30 bg-gradient-to-t from-[#F8F9FA] via-[#F8F9FA] dark:from-black dark:via-black to-transparent md:from-white md:via-white dark:md:from-[#0A0A0A] dark:md:via-[#0A0A0A]">
+      <div className="fixed bottom-0 left-0 right-0 p-6 md:absolute md:bottom-0 z-30 bg-gradient-to-t from-[#F8F9FA] via-[#F8F9FA] to-transparent md:from-white md:via-white">
         <button
           onClick={handleOpenSheet}
-          className="w-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+          className="w-full bg-neutral-900 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
         >
           <Plus size={20} className="stroke-2" />
           New Task
