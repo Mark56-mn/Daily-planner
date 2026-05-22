@@ -71,7 +71,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 md:absolute md:inset-0 md:top-auto z-50 bg-white dark:bg-[#0A0A0A] md:rounded-[40px] rounded-t-[40px] shadow-2xl max-h-[90vh] md:max-h-full overflow-y-auto flex flex-col"
+            className="fixed bottom-0 left-0 right-0 md:absolute md:inset-0 md:top-auto z-50 bg-white dark:bg-black md:rounded-[40px] rounded-t-[40px] shadow-2xl max-h-[90vh] md:max-h-full overflow-y-auto flex flex-col"
           >
             <div className="pt-12 px-6 flex flex-shrink-0 items-center justify-between">
               <button onClick={onClose} className="w-8 h-8 flex items-center justify-start text-neutral-900 dark:text-neutral-100 active:scale-95 transition-transform">
@@ -144,7 +144,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                 </div>
                 <div className={`w-10 h-6 rounded-full flex items-center px-1 transition-colors ${hasReminder ? 'bg-neutral-900 dark:bg-neutral-100' : 'bg-neutral-200 dark:bg-neutral-800'}`}>
                    <motion.div 
-                     className="w-4 h-4 bg-white dark:bg-[#0A0A0A] rounded-full shadow-sm"
+                     className="w-4 h-4 bg-white dark:bg-black rounded-full shadow-sm"
                      animate={{ x: hasReminder ? 16 : 0 }}
                    />
                 </div>

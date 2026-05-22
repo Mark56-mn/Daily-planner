@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-[#F8F9FA] dark:bg-black text-neutral-900 dark:text-neutral-100 select-none pb-safe`}>
+      <body className={`${inter.variable} font-sans antialiased bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 select-none pb-safe`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PwaRegistry />
           {children}

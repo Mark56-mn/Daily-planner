@@ -49,5 +49,20 @@ export function useTasks() {
     }));
   };
 
-  return { tasks, addTask, updateTask, deleteTask, toggleTaskCompletion, isLoaded };
+  const reorderTasks = (activeId: string, overId: string) => {
+    setTasks((prev) => {
+      const oldIndex = prev.findIndex((t) => t.id === activeId);
+      const newIndex = prev.findIndex((t) => t.id === overId);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const next = [...prev];
+        const [moved] = next.splice(oldIndex, 1);
+        // Correct splice arithmetic when items shift
+        next.splice(newIndex, 0, moved);
+        return next;
+      }
+      return prev;
+    });
+  };
+
+  return { tasks, addTask, updateTask, deleteTask, toggleTaskCompletion, reorderTasks, isLoaded };
 }
