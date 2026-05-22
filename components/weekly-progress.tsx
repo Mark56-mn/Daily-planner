@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { format, subDays } from 'date-fns';
 import { BarChart, Bar, ResponsiveContainer, Cell } from 'recharts';
 import { Task, DayOfWeek } from '@/lib/types';
+import { useTheme } from 'next-themes';
 
 interface WeeklyProgressProps {
   tasks: Task[];
@@ -11,6 +12,8 @@ interface WeeklyProgressProps {
 }
 
 export default function WeeklyProgress({ tasks, today }: WeeklyProgressProps) {
+  const { theme } = useTheme();
+
   const chartData = useMemo(() => {
     // past 7 days, ending with today
     const days = [];
@@ -65,11 +68,11 @@ export default function WeeklyProgress({ tasks, today }: WeeklyProgressProps) {
           <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
             <Bar dataKey="displayValue" radius={[4, 4, 4, 4]} barSize={16}>
               {chartData.map((entry, index) => {
-                let fill = '#F5F5F5'; // default/empty
+                let fill = theme === 'dark' ? '#262626' : '#F5F5F5'; // default/empty
                 if (entry.total > 0) {
-                  if (entry.actualPercent === 100) fill = '#171717'; // fully completed
-                  else if (entry.actualPercent > 0) fill = '#A3A3A3'; // partially completed
-                  else fill = '#E5E5E5'; // 0% but has tasks
+                  if (entry.actualPercent === 100) fill = theme === 'dark' ? '#F5F5F5' : '#171717'; // fully completed
+                  else if (entry.actualPercent > 0) fill = theme === 'dark' ? '#737373' : '#A3A3A3'; // partially completed
+                  else fill = theme === 'dark' ? '#171717' : '#E5E5E5'; // 0% but has tasks
                 }
                 return <Cell key={`cell-${index}`} fill={fill} />;
               })}
@@ -81,7 +84,7 @@ export default function WeeklyProgress({ tasks, today }: WeeklyProgressProps) {
         {chartData.map((d, i) => (
           <span 
             key={i} 
-            className={`text-[10px] font-semibold w-4 text-center ${d.isToday ? 'text-neutral-900' : 'text-neutral-300'}`}
+            className={`text-[10px] font-semibold w-4 text-center ${d.isToday ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-300 dark:text-neutral-600'}`}
           >
             {d.label}
           </span>

@@ -71,13 +71,13 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 md:absolute md:inset-0 md:top-auto z-50 bg-white md:rounded-[40px] rounded-t-[40px] shadow-2xl max-h-[90vh] md:max-h-full overflow-y-auto flex flex-col"
+            className="fixed bottom-0 left-0 right-0 md:absolute md:inset-0 md:top-auto z-50 bg-white dark:bg-[#0A0A0A] md:rounded-[40px] rounded-t-[40px] shadow-2xl max-h-[90vh] md:max-h-full overflow-y-auto flex flex-col"
           >
             <div className="pt-12 px-6 flex flex-shrink-0 items-center justify-between">
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-start text-neutral-900 active:scale-95 transition-transform">
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-start text-neutral-900 dark:text-neutral-100 active:scale-95 transition-transform">
                 <X size={24} />
               </button>
-              <h2 className="text-lg font-bold text-neutral-900">Create Task</h2>
+              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Create Task</h2>
               <div className="w-8"></div>
             </div>
 
@@ -89,7 +89,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Morning workout"
-                  className="w-full text-xl font-medium border-b border-neutral-200 pb-2 bg-transparent outline-none focus:border-neutral-900 transition-colors"
+                  className="w-full text-xl font-medium border-b border-neutral-200 dark:border-neutral-800 pb-2 bg-transparent outline-none focus:border-neutral-900 dark:focus:border-neutral-100 dark:text-neutral-100 transition-colors"
                   autoFocus
                 />
               </div>
@@ -100,7 +100,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full text-4xl font-light bg-transparent outline-none focus:text-neutral-900 transition-colors"
+                  className="w-full text-4xl font-light bg-transparent outline-none focus:text-neutral-900 dark:text-neutral-100 dark:focus:text-white transition-colors"
                 />
               </div>
 
@@ -115,8 +115,8 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                         onClick={() => toggleDay(index)}
                         className={`w-8 h-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-semibold transition-colors ${
                           isSelected 
-                            ? 'bg-neutral-900 text-white' 
-                            : 'border border-neutral-200 text-neutral-900 hover:bg-neutral-50'
+                            ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900' 
+                            : 'border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900'
                         }`}
                       >
                         {day[0]}
@@ -133,18 +133,18 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Additional context..."
                   rows={2}
-                  className="w-full text-base font-medium border-b border-neutral-200 pb-2 bg-transparent outline-none focus:border-neutral-900 transition-colors resize-none"
+                  className="w-full text-base font-medium border-b border-neutral-200 dark:border-neutral-800 pb-2 bg-transparent outline-none focus:border-neutral-900 dark:focus:border-neutral-100 dark:text-neutral-100 transition-colors resize-none"
                 />
               </div>
 
               <div className="flex items-center justify-between cursor-pointer" onClick={() => setHasReminder(!hasReminder)}>
                 <div>
-                  <p className="text-sm font-semibold">Early Reminder</p>
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Early Reminder</p>
                   <p className="text-xs text-neutral-400">5 minutes before task</p>
                 </div>
-                <div className={`w-10 h-6 rounded-full flex items-center px-1 transition-colors ${hasReminder ? 'bg-neutral-900' : 'bg-neutral-200'}`}>
+                <div className={`w-10 h-6 rounded-full flex items-center px-1 transition-colors ${hasReminder ? 'bg-neutral-900 dark:bg-neutral-100' : 'bg-neutral-200 dark:bg-neutral-800'}`}>
                    <motion.div 
-                     className="w-4 h-4 bg-white rounded-full shadow-sm"
+                     className="w-4 h-4 bg-white dark:bg-[#0A0A0A] rounded-full shadow-sm"
                      animate={{ x: hasReminder ? 16 : 0 }}
                    />
                 </div>
@@ -155,7 +155,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
               <button
                 onClick={handleSave}
                 disabled={!title.trim()}
-                className="w-full bg-neutral-900 text-white py-4 rounded-2xl font-semibold disabled:opacity-50 active:scale-[0.98] transition-all"
+                className="w-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 py-4 rounded-2xl font-semibold disabled:opacity-50 active:scale-[0.98] transition-all"
               >
                 Save Task
               </button>
