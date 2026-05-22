@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
+import { PwaRegistry } from '@/components/pwa-registry';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -24,6 +25,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased bg-[#F8F9FA] dark:bg-black text-neutral-900 dark:text-neutral-100 select-none pb-safe`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <PwaRegistry />
           {children}
         </ThemeProvider>
       </body>

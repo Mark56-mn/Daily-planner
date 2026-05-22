@@ -1,3 +1,5 @@
+import { playAlarmSound } from './audio';
+
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) {
     console.warn('This browser does not support desktop notification');
@@ -23,7 +25,11 @@ export function sendLocalNotification(title: string, options?: NotificationOptio
     new Notification(title, {
       icon: '/icon.png', // Assuming we have or will have a default icon
       badge: '/icon.png',
+      requireInteraction: true,
       ...options
     });
+    
+    // Play synthetic alarm sound
+    playAlarmSound();
   }
 }
