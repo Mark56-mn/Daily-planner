@@ -7,12 +7,13 @@ import { useState } from 'react';
 
 interface TaskCardProps {
   task: Task;
-  onToggleCompletion: (id: string) => void;
+  todayString: string;
+  onToggleCompletion: (id: string, dateStr: string) => void;
   onDelete: (id: string) => void;
 }
 
-export default function TaskCard({ task, onToggleCompletion, onDelete }: TaskCardProps) {
-  const isCompleted = task.completed;
+export default function TaskCard({ task, todayString, onToggleCompletion, onDelete }: TaskCardProps) {
+  const isCompleted = (task.completedDates || []).includes(todayString);
   const [showDelete, setShowDelete] = useState(false);
   const [showNote, setShowNote] = useState(false);
 
@@ -38,7 +39,7 @@ export default function TaskCard({ task, onToggleCompletion, onDelete }: TaskCar
     >
       <div className="flex items-center gap-4">
         <button
-          onClick={() => onToggleCompletion(task.id)}
+          onClick={() => onToggleCompletion(task.id, todayString)}
           className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300 ${
             isCompleted 
               ? 'bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900' 
@@ -56,6 +57,11 @@ export default function TaskCard({ task, onToggleCompletion, onDelete }: TaskCar
           </h3>
           <div className="flex items-center mt-1 gap-1.5 text-xs transition-colors duration-300">
             <span className={isCompleted ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400'}>{formatTime(task.time)}</span>
+            {task.repeatDays && task.repeatDays.length > 0 && (
+              <>
+                <span className={isCompleted ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400'}>• Repeat</span>
+              </>
+            )}
             {task.description && (
               <>
                 <span className={isCompleted ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400'}>•</span>

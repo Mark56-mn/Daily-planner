@@ -23,12 +23,17 @@ export default function WeeklyProgress({ tasks, today }: WeeklyProgressProps) {
       const dayOfWeek = d.getDay() as DayOfWeek;
       const label = format(d, 'EEEE').substring(0, 1); // 'S', 'M', 'T', 'W', etc.
       
-      const dayTasks = tasks.filter(task => task.date === dateStr);
+      const dayTasks = tasks.filter(task => {
+        if (task.repeatDays && task.repeatDays.length > 0) {
+          return task.repeatDays.includes(dayOfWeek);
+        }
+        return task.date === dateStr;
+      });
 
       const total = dayTasks.length;
       let completed = 0;
       if (total > 0) {
-        completed = dayTasks.filter(t => t.completed).length;
+        completed = dayTasks.filter(t => (t.completedDates || []).includes(dateStr)).length;
       }
       
       let percent = total > 0 ? (completed / total) * 100 : 0;

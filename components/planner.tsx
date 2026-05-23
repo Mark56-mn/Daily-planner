@@ -46,7 +46,7 @@ export default function Planner() {
   const { tasks, addTask, updateTask, toggleTaskCompletion, deleteTask, reorderTasks, isLoaded } = useTasks();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [now, setNow] = useState(new Date());
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [ringingTask, setRingingTask] = useState<Task | null>(null);
 
@@ -105,18 +105,25 @@ export default function Planner() {
     if (!isLoaded) return;
     
     const checkNotifications = () => {
+      const currentDay = now.getDay() as DayOfWeek;
       const currentFormattedTime = format(now, 'HH:mm');
       const time5MinFromNow = format(new Date(now.getTime() + 5 * 60000), 'HH:mm');
       const todayStr = format(now, 'yyyy-MM-dd');
 
       tasks.forEach(task => {
-        // Prevent notifying if already completed
-        if (task.completed) return;
+        // Prevent notifying if already completed today
+        const completedDates = task.completedDates || [];
+        if (completedDates.includes(todayStr)) return;
         
         let shouldRing = false;
 
+        // Check if task applies to today
+        const belongsToToday = (task.repeatDays && task.repeatDays.length > 0)
+          ? task.repeatDays.includes(currentDay)
+          : task.date === todayStr;
+
         // Standard time check
-        if (task.date === todayStr && task.time === currentFormattedTime) {
+        if (belongsToToday && task.time === currentFormattedTime) {
           shouldRing = true;
         }
 
@@ -130,7 +137,7 @@ export default function Planner() {
            }
         }
 
-        const notifyKey = `notified-${task.id}-`;
+        const notifyKey = `notified-${task.id}-${todayStr}-`;
         
         if (shouldRing) {
           if (!sessionStorage.getItem(notifyKey + 'now')) {
@@ -138,7 +145,7 @@ export default function Planner() {
             sessionStorage.setItem(notifyKey + 'now', 'true');
             setRingingTask(task);
           }
-        } else if (task.date === todayStr && task.hasReminder && task.time === time5MinFromNow) {
+        } else if (belongsToToday && task.hasReminder && task.time === time5MinFromNow) {
           if (!sessionStorage.getItem(notifyKey + '5m')) {
             sendLocalNotification(`Upcoming: ${task.title}`, { body: "Starts in 5 minutes" });
             sessionStorage.setItem(notifyKey + '5m', 'true');
@@ -156,12 +163,18 @@ export default function Planner() {
   };
 
   const todayStr = format(now, 'yyyy-MM-dd');
+  const currentDayOfWeek = now.getDay() as DayOfWeek;
 
   const todaysTasks = useMemo(() => {
-    return tasks.filter(task => task.date === todayStr);
-  }, [tasks, todayStr]);
+    return tasks.filter(task => {
+      if (task.repeatDays && task.repeatDays.length > 0) {
+        return task.repeatDays.includes(currentDayOfWeek);
+      }
+      return task.date === todayStr;
+    });
+  }, [tasks, todayStr, currentDayOfWeek]);
 
-  const completedCount = todaysTasks.filter(t => t.completed).length;
+  const completedCount = todaysTasks.filter(t => (t.completedDates || []).includes(todayStr)).length;
   const progressPercent = todaysTasks.length > 0 ? (completedCount / todaysTasks.length) * 100 : 0;
   const uncompletedCount = todaysTasks.length - completedCount;
 
@@ -195,11 +208,11 @@ export default function Planner() {
           </div>
           {mounted && (
             <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
               className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              {resolvedTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
           )}
         </div>
@@ -225,6 +238,7 @@ export default function Planner() {
                 <SortableTaskCard 
                   key={task.id}
                   task={task}
+                  todayString={todayStr}
                   onToggleCompletion={toggleTaskCompletion}
                   onDelete={deleteTask}
                 />

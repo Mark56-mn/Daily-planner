@@ -13,12 +13,23 @@ interface AddTaskSheetProps {
   onSave: (task: Task) => void;
 }
 
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetProps) {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [time, setTime] = useState('09:00');
+  const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [hasReminder, setHasReminder] = useState(false);
   const [description, setDescription] = useState('');
+
+  const toggleDay = (dayIndex: number) => {
+    setRepeatDays(prev => 
+      prev.includes(dayIndex) 
+        ? prev.filter(d => d !== dayIndex) 
+        : [...prev, dayIndex].sort()
+    );
+  };
 
   const handleSave = () => {
     if (!title.trim() || !date || !time) return;
@@ -28,7 +39,8 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
       title: title.trim(),
       date,
       time,
-      completed: false,
+      repeatDays: repeatDays as any, // Type as DayOfWeek[]
+      completedDates: [],
       createdAt: new Date().toISOString(),
       hasReminder,
       description: description.trim()
@@ -40,6 +52,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
     setTitle('');
     setDate(format(new Date(), 'yyyy-MM-dd'));
     setTime('09:00');
+    setRepeatDays([]);
     setHasReminder(false);
     setDescription('');
     onClose();
@@ -103,6 +116,28 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                     onChange={(e) => setTime(e.target.value)}
                     className="w-full text-xl font-medium border-b border-neutral-200 dark:border-neutral-800 pb-2 bg-transparent outline-none focus:border-neutral-900 dark:focus:border-neutral-100 dark:text-neutral-100 transition-colors"
                   />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Repeat Days</label>
+                <div className="flex justify-between gap-1">
+                  {DAYS.map((day, index) => {
+                    const isSelected = repeatDays.includes(index);
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => toggleDay(index)}
+                        className={`w-8 h-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-semibold transition-colors ${
+                          isSelected 
+                            ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900' 
+                            : 'border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900'
+                        }`}
+                      >
+                        {day[0]}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -6,8 +6,9 @@ export interface Task {
   description?: string;
   date: string; // "YYYY-MM-DD"
   time: string; // "HH:mm" in 24-hour format
+  repeatDays: DayOfWeek[];
   createdAt: string; // ISO string Date
-  completed: boolean;
+  completedDates: string[]; // Array of "YYYY-MM-DD"
   hasReminder: boolean;
   snoozedUntil?: string; // ISO string DateTime
 }
