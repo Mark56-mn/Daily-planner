@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { v4 as uuidv4 } from 'uuid';
 import { X, Check } from 'lucide-react';
-import { Task, DayOfWeek } from '@/lib/types';
+import { Task } from '@/lib/types';
 import { format } from 'date-fns';
 
 interface AddTaskSheetProps {
@@ -13,45 +13,35 @@ interface AddTaskSheetProps {
   onSave: (task: Task) => void;
 }
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetProps) {
   const [title, setTitle] = useState('');
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [time, setTime] = useState('09:00');
-  const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [hasReminder, setHasReminder] = useState(false);
-  const [notes, setNotes] = useState('');
-
-  const toggleDay = (dayIndex: number) => {
-    setRepeatDays(prev => 
-      prev.includes(dayIndex) 
-        ? prev.filter(d => d !== dayIndex) 
-        : [...prev, dayIndex].sort()
-    );
-  };
+  const [description, setDescription] = useState('');
 
   const handleSave = () => {
-    if (!title.trim()) return;
+    if (!title.trim() || !date || !time) return;
 
     const newTask: Task = {
       id: uuidv4(),
       title: title.trim(),
+      date,
       time,
-      repeatDays: repeatDays as DayOfWeek[],
-      completedDates: [],
+      completed: false,
       createdAt: new Date().toISOString(),
       hasReminder,
-      notes: notes.trim()
+      description: description.trim()
     };
 
     onSave(newTask);
     
     // reset form
     setTitle('');
+    setDate(format(new Date(), 'yyyy-MM-dd'));
     setTime('09:00');
-    setRepeatDays([]);
     setHasReminder(false);
-    setNotes('');
+    setDescription('');
     onClose();
   };
 
@@ -94,43 +84,33 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                 />
               </div>
 
-              <div className="space-y-2 flex flex-col">
-                <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Time</label>
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="w-full text-4xl font-light bg-transparent outline-none focus:text-neutral-900 dark:text-neutral-100 dark:focus:text-white transition-colors"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Repeat</label>
-                <div className="flex justify-between gap-1">
-                  {DAYS.map((day, index) => {
-                    const isSelected = repeatDays.includes(index);
-                    return (
-                      <button
-                        key={day}
-                        onClick={() => toggleDay(index)}
-                        className={`w-8 h-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-semibold transition-colors ${
-                          isSelected 
-                            ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900' 
-                            : 'border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900'
-                        }`}
-                      >
-                        {day[0]}
-                      </button>
-                    );
-                  })}
+              <div className="flex gap-4">
+                <div className="space-y-2 flex flex-col flex-1">
+                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Date</label>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full text-xl font-medium border-b border-neutral-200 dark:border-neutral-800 pb-2 bg-transparent outline-none focus:border-neutral-900 dark:focus:border-neutral-100 dark:text-neutral-100 transition-colors"
+                  />
+                </div>
+                
+                <div className="space-y-2 flex flex-col flex-1">
+                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Time</label>
+                  <input
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="w-full text-xl font-medium border-b border-neutral-200 dark:border-neutral-800 pb-2 bg-transparent outline-none focus:border-neutral-900 dark:focus:border-neutral-100 dark:text-neutral-100 transition-colors"
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Notes (Optional)</label>
+                <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Description (Optional)</label>
                 <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Additional context..."
                   rows={2}
                   className="w-full text-base font-medium border-b border-neutral-200 dark:border-neutral-800 pb-2 bg-transparent outline-none focus:border-neutral-900 dark:focus:border-neutral-100 dark:text-neutral-100 transition-colors resize-none"
@@ -154,7 +134,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
             <div className="p-6 flex-shrink-0 mb-4 md:mb-0">
               <button
                 onClick={handleSave}
-                disabled={!title.trim()}
+                disabled={!title.trim() || !date || !time}
                 className="w-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 py-4 rounded-2xl font-semibold disabled:opacity-50 active:scale-[0.98] transition-all"
               >
                 Save Task

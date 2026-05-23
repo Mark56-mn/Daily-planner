@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Plus, CalendarDays, Moon, Sun, GripVertical, BellRing, X } from 'lucide-react';
+import { Plus, CalendarDays, Moon, Sun, GripVertical, BellRing, X, Clock } from 'lucide-react';
 import { useTasks } from '@/lib/store';
 import { DayOfWeek, Task } from '@/lib/types';
 import TaskCard from './task-card';
@@ -43,7 +43,7 @@ function SortableTaskCard(props: any) {
 }
 
 export default function Planner() {
-  const { tasks, addTask, toggleTaskCompletion, deleteTask, reorderTasks, isLoaded } = useTasks();
+  const { tasks, addTask, updateTask, toggleTaskCompletion, deleteTask, reorderTasks, isLoaded } = useTasks();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [now, setNow] = useState(new Date());
   const { theme, setTheme } = useTheme();
@@ -70,7 +70,25 @@ export default function Planner() {
 
   const dismissAlarm = () => {
     stopAlarmSound();
-    setRingingTask(null);
+    
+    if (ringingTask) {
+      // Mark as completed or just dismiss so it doesn't ring again today?
+      // Best to add it to a dismissed state, but for this exercise we rely on session tracking.
+      setRingingTask(null);
+    }
+  };
+
+  const snoozeAlarm = () => {
+    stopAlarmSound();
+    if (ringingTask) {
+      const snoozeTime = new Date(now.getTime() + 5 * 60000); // 5 minutes
+      const updated = {
+        ...ringingTask,
+        snoozedUntil: snoozeTime.toISOString()
+      };
+      updateTask(updated);
+      setRingingTask(null);
+    }
   };
 
   // Update current time every 10 seconds for notifications and dates
@@ -87,30 +105,40 @@ export default function Planner() {
     if (!isLoaded) return;
     
     const checkNotifications = () => {
-      const currentDay = now.getDay() as DayOfWeek;
       const currentFormattedTime = format(now, 'HH:mm');
       const time5MinFromNow = format(new Date(now.getTime() + 5 * 60000), 'HH:mm');
       const todayStr = format(now, 'yyyy-MM-dd');
 
       tasks.forEach(task => {
-        // Only run for tasks that happen today
-        if (task.repeatDays.length > 0 && !task.repeatDays.includes(currentDay)) return;
-        if (task.repeatDays.length === 0 && format(new Date(task.createdAt), 'yyyy-MM-dd') !== todayStr) return;
+        // Prevent notifying if already completed
+        if (task.completed) return;
         
-        // Prevent notifying if already completed today
-        if (task.completedDates.includes(todayStr)) return;
+        let shouldRing = false;
 
-        // Note: In a real app we'd track 'notifiedFor' to avoid spamming every 10 seconds within the same minute.
-        // For simplicity in UI store, we use session storage so a tab refresh resets it but it doesn't spam while open.
-        const notifyKey = `notified-${task.id}-${todayStr}-`;
+        // Standard time check
+        if (task.date === todayStr && task.time === currentFormattedTime) {
+          shouldRing = true;
+        }
+
+        // Snoozed check
+        if (task.snoozedUntil) {
+           const snoozeDate = new Date(task.snoozedUntil);
+           if (now >= snoozeDate) {
+             shouldRing = true;
+             // Clear snooze after ringing
+             updateTask({ ...task, snoozedUntil: undefined });
+           }
+        }
+
+        const notifyKey = `notified-${task.id}-`;
         
-        if (task.time === currentFormattedTime) {
+        if (shouldRing) {
           if (!sessionStorage.getItem(notifyKey + 'now')) {
             sendLocalNotification(`Alarm: ${task.title}`, { body: "It's time!" });
             sessionStorage.setItem(notifyKey + 'now', 'true');
             setRingingTask(task);
           }
-        } else if (task.hasReminder && task.time === time5MinFromNow) {
+        } else if (task.date === todayStr && task.hasReminder && task.time === time5MinFromNow) {
           if (!sessionStorage.getItem(notifyKey + '5m')) {
             sendLocalNotification(`Upcoming: ${task.title}`, { body: "Starts in 5 minutes" });
             sessionStorage.setItem(notifyKey + '5m', 'true');
@@ -120,7 +148,7 @@ export default function Planner() {
     };
 
     checkNotifications();
-  }, [now, tasks, isLoaded]);
+  }, [now, tasks, isLoaded, updateTask]);
 
   const handleOpenSheet = async () => {
     await requestNotificationPermission();
@@ -128,21 +156,12 @@ export default function Planner() {
   };
 
   const todayStr = format(now, 'yyyy-MM-dd');
-  const currentDayOfWeek = now.getDay() as DayOfWeek;
 
   const todaysTasks = useMemo(() => {
-    return tasks
-      .filter(task => {
-        // If it has repeat days, check if today is one of them
-        if (task.repeatDays.length > 0) {
-          return task.repeatDays.includes(currentDayOfWeek);
-        }
-        // If it's a one-off task (no repeat days), check if it was created today
-        return format(new Date(task.createdAt), 'yyyy-MM-dd') === todayStr;
-      });
-  }, [tasks, currentDayOfWeek, todayStr]);
+    return tasks.filter(task => task.date === todayStr);
+  }, [tasks, todayStr]);
 
-  const completedCount = todaysTasks.filter(t => t.completedDates.includes(todayStr)).length;
+  const completedCount = todaysTasks.filter(t => t.completed).length;
   const progressPercent = todaysTasks.length > 0 ? (completedCount / todaysTasks.length) * 100 : 0;
   const uncompletedCount = todaysTasks.length - completedCount;
 
@@ -206,7 +225,6 @@ export default function Planner() {
                 <SortableTaskCard 
                   key={task.id}
                   task={task}
-                  todayString={todayStr}
                   onToggleCompletion={toggleTaskCompletion}
                   onDelete={deleteTask}
                 />
@@ -272,13 +290,22 @@ export default function Planner() {
                 {ringingTask.title}
               </p>
 
-              <button
-                onClick={dismissAlarm}
-                className="w-full bg-neutral-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold text-lg active:scale-95 transition-transform flex items-center justify-center gap-2 relative z-10"
-              >
-                <X size={24} />
-                Dismiss
-              </button>
+              <div className="flex gap-4 w-full relative z-10">
+                <button
+                  onClick={dismissAlarm}
+                  className="flex-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 py-4 rounded-2xl font-bold text-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                  <X size={24} />
+                  Dismiss
+                </button>
+                <button
+                  onClick={snoozeAlarm}
+                  className="flex-1 bg-neutral-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold text-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                  <Clock size={24} />
+                  Snooze
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

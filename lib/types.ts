@@ -3,10 +3,12 @@ export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday, 1 = Monday, et
 export interface Task {
   id: string;
   title: string;
+  description?: string;
+  date: string; // "YYYY-MM-DD"
   time: string; // "HH:mm" in 24-hour format
-  repeatDays: DayOfWeek[];
   createdAt: string; // ISO string Date
-  completedDates: string[]; // Array of "YYYY-MM-DD"
+  completed: boolean;
   hasReminder: boolean;
-  notes?: string;
+  snoozedUntil?: string; // ISO string DateTime
 }
+

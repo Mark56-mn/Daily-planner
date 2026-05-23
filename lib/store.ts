@@ -36,15 +36,12 @@ export function useTasks() {
   const deleteTask = (id: string) => 
     setTasks((prev) => prev.filter(t => t.id !== id));
 
-  const toggleTaskCompletion = (taskId: string, dateString: string) => {
+  const toggleTaskCompletion = (taskId: string) => {
     setTasks(prev => prev.map(t => {
       if (t.id !== taskId) return t;
-      const isCompleted = t.completedDates.includes(dateString);
       return {
         ...t,
-        completedDates: isCompleted 
-          ? t.completedDates.filter(d => d !== dateString)
-          : [...t.completedDates, dateString]
+        completed: !t.completed
       };
     }));
   };

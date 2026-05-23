@@ -7,13 +7,12 @@ import { useState } from 'react';
 
 interface TaskCardProps {
   task: Task;
-  todayString: string;
-  onToggleCompletion: (id: string, dateStr: string) => void;
+  onToggleCompletion: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-export default function TaskCard({ task, todayString, onToggleCompletion, onDelete }: TaskCardProps) {
-  const isCompleted = task.completedDates.includes(todayString);
+export default function TaskCard({ task, onToggleCompletion, onDelete }: TaskCardProps) {
+  const isCompleted = task.completed;
   const [showDelete, setShowDelete] = useState(false);
   const [showNote, setShowNote] = useState(false);
 
@@ -39,7 +38,7 @@ export default function TaskCard({ task, todayString, onToggleCompletion, onDele
     >
       <div className="flex items-center gap-4">
         <button
-          onClick={() => onToggleCompletion(task.id, todayString)}
+          onClick={() => onToggleCompletion(task.id)}
           className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300 ${
             isCompleted 
               ? 'bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900' 
@@ -57,12 +56,7 @@ export default function TaskCard({ task, todayString, onToggleCompletion, onDele
           </h3>
           <div className="flex items-center mt-1 gap-1.5 text-xs transition-colors duration-300">
             <span className={isCompleted ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400'}>{formatTime(task.time)}</span>
-            {task.repeatDays.length > 0 && (
-              <>
-                <span className={isCompleted ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400'}>• Daily</span>
-              </>
-            )}
-            {task.notes && (
+            {task.description && (
               <>
                 <span className={isCompleted ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400'}>•</span>
                 <button 
@@ -89,7 +83,7 @@ export default function TaskCard({ task, todayString, onToggleCompletion, onDele
       </div>
 
       <AnimatePresence>
-        {task.notes && showNote && (
+        {task.description && showNote && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -99,7 +93,7 @@ export default function TaskCard({ task, todayString, onToggleCompletion, onDele
             <div className={`mt-3 ml-9 pl-3 border-l-2 text-xs leading-relaxed whitespace-pre-wrap ${
               isCompleted ? 'border-neutral-200 dark:border-neutral-800 text-neutral-400 dark:text-neutral-600' : 'border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400'
             }`}>
-              {task.notes}
+              {task.description}
             </div>
           </motion.div>
         )}
