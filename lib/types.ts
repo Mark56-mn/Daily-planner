@@ -6,6 +6,7 @@ export interface Task {
   description?: string;
   date: string; // "YYYY-MM-DD"
   time: string; // "HH:mm" in 24-hour format
+  sound?: string; // 'beeps', 'chimes', 'siren'
   repeatDays: DayOfWeek[];
   createdAt: string; // ISO string Date
   completedDates: string[]; // Array of "YYYY-MM-DD"

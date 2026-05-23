@@ -9,7 +9,7 @@ import TaskCard from './task-card';
 import AddTaskSheet from './add-task-sheet';
 import WeeklyProgress from './weekly-progress';
 import { requestNotificationPermission, sendLocalNotification } from '@/lib/notifications';
-import { stopAlarmSound } from '@/lib/audio';
+import { stopAlarmSound, playAlarmSound, initAudio } from '@/lib/audio';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -49,6 +49,10 @@ export default function Planner() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [ringingTask, setRingingTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -93,12 +97,35 @@ export default function Planner() {
 
   // Update current time every 10 seconds for notifications and dates
   useEffect(() => {
-    setMounted(true);
+    // Request permissions on visit
+    requestNotificationPermission();
+
+    const handleFirstInteraction = () => {
+      initAudio();
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction);
+
     const interval = setInterval(() => {
       setNow(new Date());
     }, 10000); // 10s check
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
   }, []);
+
+  useEffect(() => {
+    if (ringingTask) {
+      playAlarmSound(ringingTask.sound || 'beeps');
+    } else {
+      stopAlarmSound();
+    }
+  }, [ringingTask]);
 
   // Notification engine
   useEffect(() => {

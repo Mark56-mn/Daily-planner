@@ -1,7 +1,21 @@
 let activeInterval: NodeJS.Timeout | null = null;
 let audioCtx: AudioContext | null = null;
 
-export function playAlarmSound() {
+export function initAudio() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  } catch (e) {
+    console.warn("Failed to init audio ctx", e);
+  }
+}
+
+export function playAlarmSound(soundType = 'beeps') {
   if (typeof window === 'undefined') return;
   
   try {
@@ -31,20 +45,32 @@ export function playAlarmSound() {
       osc.stop(startTime + duration);
     };
 
-    const playBeeps = () => {
+    const playSoundPattern = () => {
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
-      playTone(1200, now, 0.1, 'square');
-      playTone(1200, now + 0.2, 0.1, 'square');
-      playTone(1200, now + 0.4, 0.1, 'square');
+      
+      if (soundType === 'chimes') {
+        playTone(523.25, now, 0.2, 'sine'); // C5
+        playTone(659.25, now + 0.2, 0.2, 'sine'); // E5
+        playTone(783.99, now + 0.4, 0.4, 'sine'); // G5
+      } else if (soundType === 'siren') {
+        playTone(800, now, 0.4, 'sawtooth');
+        playTone(600, now + 0.4, 0.4, 'sawtooth');
+      } else {
+        // default beeps
+        playTone(1200, now, 0.1, 'square');
+        playTone(1200, now + 0.2, 0.1, 'square');
+        playTone(1200, now + 0.4, 0.1, 'square');
+      }
     };
 
     // Play immediately
-    playBeeps();
+    playSoundPattern();
     
-    // Clear any existing loop and start a new one (every 1.5 seconds)
+    // Clear any existing loop and start a new one
     if (activeInterval) clearInterval(activeInterval);
-    activeInterval = setInterval(playBeeps, 1500);
+    const intervalDuration = soundType === 'chimes' ? 2000 : soundType === 'siren' ? 800 : 1500;
+    activeInterval = setInterval(playSoundPattern, intervalDuration);
     
   } catch (e) {
     console.warn("Audio playback failed (interaction required):", e);

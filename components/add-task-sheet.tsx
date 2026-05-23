@@ -19,6 +19,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [time, setTime] = useState('09:00');
+  const [sound, setSound] = useState('beeps');
   const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [hasReminder, setHasReminder] = useState(false);
   const [description, setDescription] = useState('');
@@ -39,6 +40,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
       title: title.trim(),
       date,
       time,
+      sound,
       repeatDays: repeatDays as any, // Type as DayOfWeek[]
       completedDates: [],
       createdAt: new Date().toISOString(),
@@ -52,6 +54,7 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
     setTitle('');
     setDate(format(new Date(), 'yyyy-MM-dd'));
     setTime('09:00');
+    setSound('beeps');
     setRepeatDays([]);
     setHasReminder(false);
     setDescription('');
@@ -163,6 +166,19 @@ export default function AddTaskSheet({ isOpen, onClose, onSave }: AddTaskSheetPr
                      animate={{ x: hasReminder ? 16 : 0 }}
                    />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Alarm Sound</label>
+                <select
+                  value={sound}
+                  onChange={(e) => setSound(e.target.value)}
+                  className="w-full text-base font-medium border-b border-neutral-200 dark:border-neutral-800 pb-2 bg-transparent outline-none focus:border-neutral-900 dark:focus:border-neutral-100 dark:text-neutral-100 transition-colors"
+                >
+                  <option value="beeps" className="dark:bg-neutral-900">Beeps</option>
+                  <option value="chimes" className="dark:bg-neutral-900">Chimes</option>
+                  <option value="siren" className="dark:bg-neutral-900">Siren</option>
+                </select>
               </div>
             </div>
 
